@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>명대사 맞히기 · Guess the Line | OnlyOne</title>
+<meta name="description" content="영화·드라마 명대사를 보고 어떤 작품인지 맞혀보세요. 연속 정답에 도전! Guess which movie or drama a famous line is from.">
+<meta property="og:title" content="명대사 맞히기 · Guess the Line">
+<meta property="og:description" content="명대사만 보고 작품 맞히기. 몇 개까지 연속으로 맞힐 수 있나요?">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+
+<!-- Google Analytics 4 + Consent Mode v2 (default-deny) -->
+<!-- 배포 전 G-XXXXXXXXXX 를 실제 측정 ID로 교체 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('consent', 'default', {
+    'ad_storage': 'denied',
+    'ad_user_data': 'denied',
+    'ad_personalization': 'denied',
+    'analytics_storage': 'denied',
+    'wait_for_update': 500
+  });
+  gtag('js', new Date());
+  gtag('config', 'G-XXXXXXXXXX', { 'anonymize_ip': true });
+</script>
+
+<style>
+  :root{
+    --bg:#FAFAF8;
+    --slate:#3D4248;
+    --slate-soft:#5A616A;
+    --line:#E7E5DF;
+    --card:#FFFFFF;
+    --ok:#2E7D5B;
+    --no:#C0463E;
+    --accent:#3D4248;
+    --shadow:0 1px 2px rgba(61,66,72,.04),0 8px 28px rgba(61,66,72,.06);
+    --radius:20px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    font-family:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+    background:var(--bg);color:var(--slate);
+    line-height:1.5;letter-spacing:-.01em;
+    display:flex;flex-direction:column;min-height:100%;
+    padding:env(safe-area-inset-top) 16px calc(env(safe-area-inset-bottom) + 16px);
+  }
+  .wrap{width:100%;max-width:560px;margin:0 auto;flex:1;display:flex;flex-direction:column}
+
+  /* Header */
+  header{display:flex;align-items:center;justify-content:space-between;padding:22px 2px 8px}
+  .brand{display:flex;align-items:center;gap:9px;text-decoration:none;color:var(--slate)}
+  .brand svg{display:block}
+  .brand b{font-size:17px;font-weight:700;letter-spacing:-.02em}
+  .lang{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--card)}
+  .lang button{border:0;background:transparent;font:inherit;font-size:13px;font-weight:600;
+    color:var(--slate-soft);padding:7px 13px;cursor:pointer;transition:.18s}
+  .lang button.on{background:var(--slate);color:#fff}
+
+  /* Title block */
+  .head{padding:14px 2px 10px}
+  .head h1{font-size:26px;font-weight:800;letter-spacing:-.03em;line-height:1.2}
+  .head p{color:var(--slate-soft);font-size:14px;margin-top:6px}
+
+  /* Stats */
+  .stats{display:flex;gap:10px;margin:6px 0 14px}
+  .stat{flex:1;background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:11px 14px;box-shadow:var(--shadow)}
+  .stat .k{font-size:12px;color:var(--slate-soft);font-weight:600}
+  .stat .v{font-size:22px;font-weight:800;letter-spacing:-.02em;margin-top:2px}
+  .stat .v small{font-size:13px;font-weight:600;color:var(--slate-soft)}
+
+  /* Quote card */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:30px 24px;position:relative;overflow:hidden}
+  .card::before{content:"";position:absolute;top:18px;left:22px;font-size:54px;line-height:1;
+    font-weight:800;color:var(--line);content:"\201C"}
+  .qtype{font-size:12px;font-weight:700;color:var(--slate-soft);letter-spacing:.02em;
+    text-transform:uppercase;margin-bottom:10px}
+  .quote{font-size:23px;font-weight:700;letter-spacing:-.02em;line-height:1.45;
+    padding-top:6px;min-height:2.9em;display:flex;align-items:center}
+  .speak{position:absolute;top:20px;right:18px;width:40px;height:40px;border-radius:50%;
+    border:1px solid var(--line);background:var(--bg);display:grid;place-items:center;
+    cursor:pointer;transition:.18s;color:var(--slate)}
+  .speak:hover{background:#fff}
+  .speak.active{background:var(--slate);color:#fff;border-color:var(--slate)}
+
+  /* Options */
+  .opts{display:grid;gap:10px;margin-top:16px}
+  .opt{width:100%;text-align:left;font:inherit;font-size:16px;font-weight:600;
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:15px 17px;cursor:pointer;color:var(--slate);
+    transition:transform .12s,border-color .15s,background .15s;display:flex;
+    align-items:center;justify-content:space-between;gap:10px}
+  .opt:hover{border-color:#cfcdc6}
+  .opt:active{transform:scale(.985)}
+  .opt:disabled{cursor:default}
+  .opt .mk{font-size:18px;font-weight:800;opacity:0}
+  .opt.ok{background:rgba(46,125,91,.08);border-color:var(--ok);color:var(--ok)}
+  .opt.ok .mk{opacity:1}
+  .opt.no{background:rgba(192,70,62,.07);border-color:var(--no);color:var(--no)}
+  .opt.no .mk{opacity:1}
+
+  .hint{text-align:center;font-size:13px;color:var(--slate-soft);margin-top:14px;min-height:18px;
+    transition:.2s}
+
+  /* Toolbar */
+  .tools{display:flex;gap:10px;margin-top:16px}
+  .tools button{flex:1;font:inherit;font-size:14px;font-weight:700;border-radius:12px;
+    padding:13px;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--slate);
+    transition:.15s}
+  .tools button:hover{border-color:#cfcdc6}
+  .tools .primary{background:var(--slate);color:#fff;border-color:var(--slate)}
+  .auto{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;
+    font-size:13px;color:var(--slate-soft);font-weight:600}
+  .sw{width:42px;height:24px;border-radius:999px;background:var(--line);position:relative;
+    cursor:pointer;transition:.2s;flex:none}
+  .sw::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.18);transition:.2s}
+  .sw.on{background:var(--slate)}
+  .sw.on::after{transform:translateX(18px)}
+
+  /* Footer */
+  footer{text-align:center;color:var(--slate-soft);font-size:12px;padding:26px 0 6px;line-height:1.7}
+  footer a{color:var(--slate-soft)}
+  .hub{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);
+    background:var(--card);border-radius:999px;padding:7px 14px;font-size:13px;font-weight:600;
+    color:var(--slate);text-decoration:none;margin:18px auto 0}
+  .disc{font-size:11px;color:#9b9890;margin-top:10px}
+
+  /* Consent banner */
+  .consent{position:fixed;left:12px;right:12px;bottom:12px;max-width:560px;margin:0 auto;
+    background:var(--card);border:1px solid var(--line);border-radius:18px;
+    box-shadow:0 10px 40px rgba(61,66,72,.16);padding:18px 18px 16px;z-index:50;
+    transform:translateY(140%);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+  .consent.show{transform:translateY(0)}
+  body.banner-open{padding-bottom:calc(env(safe-area-inset-bottom) + 200px)}
+  .consent p{font-size:13px;color:var(--slate-soft);line-height:1.55}
+  .consent .row{display:flex;gap:9px;margin-top:13px}
+  .consent button{flex:1;font:inherit;font-size:14px;font-weight:700;border-radius:11px;
+    padding:11px;cursor:pointer;border:1px solid var(--line);background:var(--bg);color:var(--slate)}
+  .consent button.acc{background:var(--slate);color:#fff;border-color:var(--slate)}
+
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+  @media (max-width:380px){.quote{font-size:20px}.head h1{font-size:23px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="brand" href="https://main.onlyonecorpceo.workers.dev" aria-label="OnlyOne">
+      <svg width="26" height="26" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+        <circle cx="32" cy="24" r="14" stroke="#3D4248" stroke-width="7"/>
+        <rect x="28.5" y="38" width="7" height="20" rx="3.5" fill="#3D4248"/>
+      </svg>
+      <b>OnlyOne</b>
+    </a>
+    <div class="lang" role="group" aria-label="Language">
+      <button id="ko" class="on" onclick="setLang('ko')">한국어</button>
+      <button id="en" onclick="setLang('en')">EN</button>
+    </div>
+  </header>
+
+  <div class="head">
+    <h1 data-t="title">명대사 맞히기</h1>
+    <p data-t="sub">대사를 보고 어떤 작품인지 맞혀보세요. 정답을 누르면 바로 다음으로!</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="k" data-t="cur">현재 연속</div>
+      <div class="v"><span id="streak">0</span><small data-t="unit"> 개</small></div>
+    </div>
+    <div class="stat">
+      <div class="k" data-t="best">최고 기록</div>
+      <div class="v"><span id="best">0</span><small data-t="unit"> 개</small></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <button class="speak" id="speakBtn" onclick="speakQuote()" aria-label="읽어주기">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M4 9v6h4l5 4V5L8 9H4z"/>
+        <path d="M16.5 12a3.5 3.5 0 0 0-2-3.16v6.32A3.5 3.5 0 0 0 16.5 12z"/>
+        <path d="M14.5 4.2v2.06A5.8 5.8 0 0 1 14.5 19.74v2.06A7.8 7.8 0 0 0 14.5 4.2z"/>
+      </svg>
+    </button>
+    <div class="qtype" id="qtype">QUOTE</div>
+    <div class="quote" id="quote">…</div>
+  </div>
+
+  <div class="opts" id="opts"></div>
+  <div class="hint" id="hint"></div>
+
+  <div class="auto" onclick="toggleAuto()">
+    <span data-t="autolabel">새 대사 자동 읽어주기</span>
+    <span class="sw" id="autoSw"></span>
+  </div>
+
+  <div class="tools">
+    <button class="primary" onclick="shareCard()" data-t="share">기록 공유하기</button>
+  </div>
+
+  <a class="hub" href="https://main.onlyonecorpceo.workers.dev">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    <span data-t="hub">OnlyOne 더 보기</span>
+  </a>
+
+  <footer>
+    <div data-t="contact">문의 · <a href="mailto:onlyonecorpceo@gmail.com">onlyonecorpceo@gmail.com</a></div>
+    <div>© OnlyOne · For a Happy Day</div>
+  </footer>
+</div>
+
+<!-- Consent banner -->
+<div class="consent" id="consent" role="dialog" aria-live="polite">
+  <p data-t="consentText">방문 통계를 위해 쿠키를 사용합니다. 동의하시면 익명 분석에 활용됩니다.</p>
+  <div class="row">
+    <button onclick="setConsent(false)" data-t="decline">거부</button>
+    <button class="acc" onclick="setConsent(true)" data-t="accept">동의</button>
+  </div>
+</div>
+
+<script>
+/* ---------- 데이터: 명대사 (작품 맞히기) ----------
+   확장: 아래 배열에 {q:"대사", a:"작품", t:"영화|드라마"} 추가만 하면 됩니다. */
+const DATA = {
+ko:[
+ {q:"아들아, 너는 계획이 다 있구나.",a:"기생충",t:"영화"},
+ {q:"우리는 깐부잖아.",a:"오징어 게임",t:"드라마"},
+ {q:"무궁화 꽃이 피었습니다.",a:"오징어 게임",t:"드라마"},
+ {q:"날이 좋아서, 날이 좋지 않아서, 모든 날이 좋았다.",a:"도깨비",t:"드라마"},
+ {q:"그 어려운 걸 자꾸 해냅니다, 제가.",a:"태양의 후예",t:"드라마"},
+ {q:"회사가 전쟁터라고? 밖은 지옥이다.",a:"미생",t:"드라마"},
+ {q:"어머니, 저를 전적으로 믿으셔야 합니다.",a:"스카이 캐슬",t:"드라마"},
+ {q:"내 가치를 네가 정하지 마.",a:"이태원 클라쓰",t:"드라마"},
+ {q:"나는 네 학창시절을 망치러 온 너의 구원자야.",a:"더 글로리",t:"드라마"},
+ {q:"제 이름은 똑바로 읽어도, 거꾸로 읽어도 우영우입니다.",a:"이상한 변호사 우영우",t:"드라마"},
+ {q:"추앙해요. 날 가득 채워줘요.",a:"나의 해방일지",t:"드라마"},
+ {q:"사랑에 빠진 게 죄는 아니잖아.",a:"부부의 세계",t:"드라마"},
+ {q:"합시다, 러브. 나랑 같이.",a:"미스터 션샤인",t:"드라마"},
+ {q:"홍시 맛이 나서 홍시라 생각한 것이온데.",a:"대장금",t:"드라마"},
+ {q:"나 지금 떨고 있니?",a:"모래시계",t:"드라마"},
+ {q:"사딸라.",a:"야인시대",t:"드라마"},
+ {q:"이게 최선입니까? 확실해요?",a:"시크릿 가든",t:"드라마"},
+ {q:"이 안에 너 있다.",a:"파리의 연인",t:"드라마"},
+ {q:"얼마면 돼? 얼마면 되겠니?",a:"가을동화",t:"드라마"},
+ {q:"아빠도 아빠가 처음이라서 그래.",a:"응답하라 1988",t:"드라마"},
+ {q:"웃어라, 온 세상이 너와 함께 웃을 것이다.",a:"올드보이",t:"영화"},
+ {q:"니가 가라, 하와이.",a:"친구",t:"영화"},
+ {q:"고마해라, 마이 무따 아이가.",a:"친구",t:"영화"},
+ {q:"묻고 더블로 가!",a:"타짜",t:"영화"},
+ {q:"밥은 먹고 다니냐?",a:"살인의 추억",t:"영화"},
+ {q:"드루와, 드루와.",a:"신세계",t:"영화"},
+ {q:"살아있네.",a:"범죄와의 전쟁",t:"영화"},
+ {q:"우리가 돈이 없지 가오가 없냐?",a:"베테랑",t:"영화"},
+ {q:"어이가 없네.",a:"베테랑",t:"영화"},
+ {q:"모히또 가서 몰디브 한 잔 하자.",a:"내부자들",t:"영화"},
+ {q:"뭣이 중헌디?",a:"곡성",t:"영화"},
+ {q:"신에게는 아직 열두 척의 배가 남아 있사옵니다.",a:"명량",t:"영화"},
+ {q:"지금까지 이런 맛은 없었다. 이것은 갈비인가 통닭인가.",a:"극한직업",t:"영화"},
+ {q:"대한민국의 주권은 국민에게 있고, 모든 권력은 국민으로부터 나온다.",a:"변호인",t:"영화"},
+ {q:"넌 내일만 보고 살지? 난 오늘만 보고 산다.",a:"아저씨",t:"영화"},
+ {q:"너나 잘하세요.",a:"친절한 금자씨",t:"영화"},
+ {q:"넌 나에게 모욕감을 줬어.",a:"달콤한 인생",t:"영화"},
+ {q:"초원이 다리는? 백만 불짜리 다리!",a:"말아톤",t:"영화"},
+ {q:"이만하면 잘 살았지예.",a:"국제시장",t:"영화"},
+ {q:"책상을 탁 치니, 억 하고 죽었다.",a:"1987",t:"영화"},
+ {q:"납득이 안 가네, 납득이.",a:"건축학개론",t:"영화"},
+ {q:"나에겐 꿈이 없었다.",a:"비트",t:"영화"},
+ {q:"나 다시 돌아갈래!",a:"박하사탕",t:"영화"},
+ {q:"바람은 계산하는 게 아니라 극복하는 것이다.",a:"최종병기 활",t:"영화"},
+ {q:"알려줘야지, 우린 계속 싸우고 있다고.",a:"암살",t:"영화"},
+ {q:"내가 곧 국가야!",a:"마약왕",t:"영화"},
+ {q:"진실의 방으로 들어와.",a:"범죄도시",t:"영화"},
+ {q:"쫄리면 뒤지시던가.",a:"타짜",t:"영화"},
+ {q:"뭐를 마이 멕여야지.",a:"웰컴 투 동막골",t:"영화"},
+ {q:"이거 마시면 나랑 사귀는 거다.",a:"내 머리 속의 지우개",t:"영화"},
+ {q:"어떻게 사랑이 변하니?",a:"봄날은 간다",t:"영화"},
+ {q:"나 여기 있고 너 거기 있어.",a:"왕의 남자",t:"영화"},
+ {q:"아파트는 주민의 것.",a:"콘크리트 유토피아",t:"영화"},
+ {q:"실패하면 반역이고, 성공하면 혁명 아닙니까!",a:"서울의 봄",t:"영화"},
+ {q:"내가 왕이 될 상인가.",a:"관상",t:"영화"},
+ {q:"남자건 외계인이건 상관없어.",a:"커피프린스 1호점",t:"드라마"},
+ {q:"똥덩어리.",a:"베토벤 바이러스",t:"드라마"},
+ {q:"아프냐? 나도 아프다.",a:"다모",t:"드라마"}
+],
+en:[
+ {q:"I'm gonna make him an offer he can't refuse.",a:"The Godfather",t:"Movie"},
+ {q:"No, I am your father.",a:"The Empire Strikes Back",t:"Movie"},
+ {q:"I'll be back.",a:"The Terminator",t:"Movie"},
+ {q:"Hasta la vista, baby.",a:"Terminator 2",t:"Movie"},
+ {q:"I'm the king of the world!",a:"Titanic",t:"Movie"},
+ {q:"Life is like a box of chocolates.",a:"Forrest Gump",t:"Movie"},
+ {q:"Why so serious?",a:"The Dark Knight",t:"Movie"},
+ {q:"Frankly, my dear, I don't give a damn.",a:"Gone with the Wind",t:"Movie"},
+ {q:"Here's looking at you, kid.",a:"Casablanca",t:"Movie"},
+ {q:"Toto, I've a feeling we're not in Kansas anymore.",a:"The Wizard of Oz",t:"Movie"},
+ {q:"You're gonna need a bigger boat.",a:"Jaws",t:"Movie"},
+ {q:"Houston, we have a problem.",a:"Apollo 13",t:"Movie"},
+ {q:"To infinity and beyond!",a:"Toy Story",t:"Movie"},
+ {q:"Hakuna Matata.",a:"The Lion King",t:"Movie"},
+ {q:"Show me the money!",a:"Jerry Maguire",t:"Movie"},
+ {q:"Do I feel lucky? Well, do ya, punk?",a:"Dirty Harry",t:"Movie"},
+ {q:"Say hello to my little friend!",a:"Scarface",t:"Movie"},
+ {q:"I ate his liver with some fava beans.",a:"The Silence of the Lambs",t:"Movie"},
+ {q:"E.T. phone home.",a:"E.T.",t:"Movie"},
+ {q:"Magic mirror on the wall, who's the fairest of them all?",a:"Snow White",t:"Movie"},
+ {q:"If you build it, he will come.",a:"Field of Dreams",t:"Movie"},
+ {q:"You can't handle the truth!",a:"A Few Good Men",t:"Movie"},
+ {q:"Here's Johnny!",a:"The Shining",t:"Movie"},
+ {q:"You talkin' to me?",a:"Taxi Driver",t:"Movie"},
+ {q:"Are you not entertained?",a:"Gladiator",t:"Movie"},
+ {q:"There is no spoon.",a:"The Matrix",t:"Movie"},
+ {q:"May the Force be with you.",a:"Star Wars",t:"Movie"},
+ {q:"I love the smell of napalm in the morning.",a:"Apocalypse Now",t:"Movie"},
+ {q:"Carpe diem. Seize the day, boys.",a:"Dead Poets Society",t:"Movie"},
+ {q:"They may take our lives, but they'll never take our freedom!",a:"Braveheart",t:"Movie"},
+ {q:"Yo, Adrian!",a:"Rocky",t:"Movie"},
+ {q:"I see dead people.",a:"The Sixth Sense",t:"Movie"},
+ {q:"What we've got here is failure to communicate.",a:"Cool Hand Luke",t:"Movie"},
+ {q:"I'm ready for my close-up.",a:"Sunset Boulevard",t:"Movie"},
+ {q:"I'm as mad as hell, and I'm not going to take this anymore!",a:"Network",t:"Movie"},
+ {q:"Keep your friends close, but your enemies closer.",a:"The Godfather Part II",t:"Movie"},
+ {q:"As far back as I can remember, I always wanted to be a gangster.",a:"Goodfellas",t:"Movie"},
+ {q:"Say 'what' again. I dare you.",a:"Pulp Fiction",t:"Movie"},
+ {q:"The first rule of Fight Club is: you do not talk about Fight Club.",a:"Fight Club",t:"Movie"},
+ {q:"Life finds a way.",a:"Jurassic Park",t:"Movie"},
+ {q:"My name is Inigo Montoya. You killed my father. Prepare to die.",a:"The Princess Bride",t:"Movie"},
+ {q:"Where we're going, we don't need roads.",a:"Back to the Future",t:"Movie"},
+ {q:"I feel the need... the need for speed.",a:"Top Gun",t:"Movie"},
+ {q:"Nobody puts Baby in a corner.",a:"Dirty Dancing",t:"Movie"},
+ {q:"One does not simply walk into Mordor.",a:"The Lord of the Rings",t:"Movie"},
+ {q:"Live long and prosper.",a:"Star Trek",t:"Movie"},
+ {q:"I'm sorry, Dave. I'm afraid I can't do that.",a:"2001: A Space Odyssey",t:"Movie"},
+ {q:"Greed, for lack of a better word, is good.",a:"Wall Street",t:"Movie"},
+ {q:"Forget it, Jake. It's Chinatown.",a:"Chinatown",t:"Movie"},
+ {q:"I coulda been a contender.",a:"On the Waterfront",t:"Movie"},
+ {q:"Winter is coming.",a:"Game of Thrones",t:"Drama"},
+ {q:"Say my name.",a:"Breaking Bad",t:"Drama"},
+ {q:"How you doin'?",a:"Friends",t:"Drama"},
+ {q:"That's what she said.",a:"The Office",t:"Drama"},
+ {q:"D'oh!",a:"The Simpsons",t:"Drama"},
+ {q:"No soup for you!",a:"Seinfeld",t:"Drama"},
+ {q:"This is the Way.",a:"The Mandalorian",t:"Drama"},
+ {q:"The truth is out there.",a:"The X-Files",t:"Drama"},
+ {q:"Elementary, my dear Watson.",a:"Sherlock Holmes",t:"Movie"},
+ {q:"Bond. James Bond.",a:"Dr. No",t:"Movie"},
+ {q:"Fasten your seatbelts. It's going to be a bumpy night.",a:"All About Eve",t:"Movie"},
+ {q:"Love means never having to say you're sorry.",a:"Love Story",t:"Movie"},
+ {q:"The stuff that dreams are made of.",a:"The Maltese Falcon",t:"Movie"},
+ {q:"They call me Mister Tibbs!",a:"In the Heat of the Night",t:"Movie"},
+ {q:"Rosebud.",a:"Citizen Kane",t:"Movie"},
+ {q:"Made it, Ma! Top of the world!",a:"White Heat",t:"Movie"},
+ {q:"I'm walking here! I'm walking here!",a:"Midnight Cowboy",t:"Movie"},
+ {q:"Stella! Hey, Stella!",a:"A Streetcar Named Desire",t:"Movie"},
+ {q:"Well, nobody's perfect.",a:"Some Like It Hot",t:"Movie"},
+ {q:"It's alive! It's alive!",a:"Frankenstein",t:"Movie"},
+ {q:"There's no crying in baseball!",a:"A League of Their Own",t:"Movie"},
+ {q:"I'll have what she's having.",a:"When Harry Met Sally",t:"Movie"},
+ {q:"Mrs. Robinson, you're trying to seduce me. Aren't you?",a:"The Graduate",t:"Movie"},
+ {q:"Snap out of it!",a:"Moonstruck",t:"Movie"},
+ {q:"Wax on, wax off.",a:"The Karate Kid",t:"Movie"},
+ {q:"Just keep swimming.",a:"Finding Nemo",t:"Movie"},
+ {q:"I am Groot.",a:"Guardians of the Galaxy",t:"Movie"},
+ {q:"Wakanda forever!",a:"Black Panther",t:"Movie"},
+ {q:"I am Iron Man.",a:"Iron Man",t:"Movie"},
+ {q:"Avengers, assemble.",a:"Avengers: Endgame",t:"Movie"},
+ {q:"I can do this all day.",a:"Captain America",t:"Movie"},
+ {q:"With great power comes great responsibility.",a:"Spider-Man",t:"Movie"},
+ {q:"Do or do not. There is no try.",a:"The Empire Strikes Back",t:"Movie"},
+ {q:"I volunteer as tribute!",a:"The Hunger Games",t:"Movie"},
+ {q:"You're a wizard, Harry.",a:"Harry Potter",t:"Movie"},
+ {q:"I drink your milkshake!",a:"There Will Be Blood",t:"Movie"},
+ {q:"I'm just a girl, standing in front of a boy, asking him to love her.",a:"Notting Hill",t:"Movie"},
+ {q:"They're heeere.",a:"Poltergeist",t:"Movie"},
+ {q:"Be afraid. Be very afraid.",a:"The Fly",t:"Movie"},
+ {q:"Game over, man! Game over!",a:"Aliens",t:"Movie"},
+ {q:"Welcome to the party, pal!",a:"Die Hard",t:"Movie"},
+ {q:"You is kind. You is smart. You is important.",a:"The Help",t:"Movie"},
+ {q:"Just when I thought I was out, they pull me back in.",a:"The Godfather Part III",t:"Movie"},
+ {q:"Big mistake. Big. Huge.",a:"Pretty Woman",t:"Movie"},
+ {q:"Soylent Green is people!",a:"Soylent Green",t:"Movie"},
+ {q:"Gentlemen, you can't fight in here! This is the War Room!",a:"Dr. Strangelove",t:"Movie"},
+ {q:"I'm Batman.",a:"Batman",t:"Movie"},
+ {q:"Hulk, smash!",a:"The Avengers",t:"Movie"},
+ {q:"I am serious. And don't call me Shirley.",a:"Airplane!",t:"Movie"},
+ {q:"'Tis but a scratch.",a:"Monty Python and the Holy Grail",t:"Movie"},
+ {q:"He's not the Messiah, he's a very naughty boy!",a:"Life of Brian",t:"Movie"},
+ {q:"Stay classy, San Diego.",a:"Anchorman",t:"Movie"},
+ {q:"Bazinga!",a:"The Big Bang Theory",t:"Drama"},
+ {q:"Legen— wait for it —dary.",a:"How I Met Your Mother",t:"Drama"},
+ {q:"Treat yo self.",a:"Parks and Recreation",t:"Drama"},
+ {q:"Clear eyes, full hearts, can't lose.",a:"Friday Night Lights",t:"Drama"},
+ {q:"Whatchu talkin' 'bout, Willis?",a:"Diff'rent Strokes",t:"Drama"},
+ {q:"Norm!",a:"Cheers",t:"Drama"},
+ {q:"Did I do that?",a:"Family Matters",t:"Drama"},
+ {q:"Nobody expects the Spanish Inquisition!",a:"Monty Python's Flying Circus",t:"Drama"}
+]
+};
+
+/* ---------- i18n ---------- */
+const T={
+ ko:{title:"명대사 맞히기",sub:"대사를 보고 어떤 작품인지 맞혀보세요. 정답을 누르면 바로 다음으로!",
+   cur:"현재 연속",best:"최고 기록",unit:" 개",
+   autolabel:"새 대사 자동 읽어주기",hub:"OnlyOne 더 보기",
+   contact:'문의 · <a href="mailto:onlyonecorpceo@gmail.com">onlyonecorpceo@gmail.com</a>',
+   right:"정답!",wrong:"정답은",share:"기록 공유하기",restart:"처음부터",
+   consentText:"방문 통계를 위해 쿠키를 사용합니다. 동의하시면 익명 분석에 활용됩니다.",
+   accept:"동의",decline:"거부",movie:"영화",drama:"드라마"},
+ en:{title:"Guess the Line",sub:"Read the line and guess the title. A tap auto-advances you.",
+   cur:"Streak",best:"Best",unit:"",
+   autolabel:"Auto-read each new line",hub:"More from OnlyOne",
+   contact:'Contact · <a href="mailto:onlyonecorpceo@gmail.com">onlyonecorpceo@gmail.com</a>',
+   right:"Correct!",wrong:"Answer:",share:"Share my streak",restart:"Restart",
+   consentText:"We use cookies for visit analytics. Allow anonymous measurement?",
+   accept:"Allow",decline:"Decline",movie:"Movie",drama:"Drama"}
+};
+
+/* ---------- 상태 ---------- */
+let lang = localStorage.getItem('oo_md_lang') || ((navigator.language||'').startsWith('en') ? 'en' : 'ko');
+let pool=[], idx=0, cur=null, locked=false;
+let streak=0, best=+(localStorage.getItem('oo_md_best')||0);
+let autoRead = localStorage.getItem('oo_md_auto')==='1';
+
+const $=s=>document.querySelector(s);
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]];}return a;};
+
+function applyLang(){
+ document.documentElement.lang=lang;
+ const t=T[lang];
+ document.querySelectorAll('[data-t]').forEach(el=>{
+   const k=el.getAttribute('data-t');
+   if(t[k]!==undefined) el.innerHTML=t[k];
+ });
+ $('#ko').classList.toggle('on',lang==='ko');
+ $('#en').classList.toggle('on',lang==='en');
+ $('#best').textContent=best;
+ buildPool(); newQuestion();
+}
+function setLang(l){lang=l;localStorage.setItem('oo_md_lang',l);applyLang();}
+
+function buildPool(){pool=shuffle(DATA[lang]);idx=0;}
+function pickDistractors(answer){
+ const titles=[...new Set(DATA[lang].map(d=>d.a))].filter(a=>a!==answer);
+ return shuffle(titles).slice(0,3);
+}
+
+function newQuestion(){
+ if(idx>=pool.length){pool=shuffle(DATA[lang]);idx=0;}
+ cur=pool[idx++];locked=false;
+ $('#quote').textContent=cur.q;
+ const tt=cur.t==='영화'||cur.t==='Movie'?T[lang].movie:T[lang].drama;
+ $('#qtype').textContent=tt;
+ const opts=shuffle([cur.a,...pickDistractors(cur.a)]);
+ const box=$('#opts');box.innerHTML='';
+ opts.forEach(o=>{
+   const b=document.createElement('button');
+   b.className='opt';b.innerHTML=`<span>${o}</span><span class="mk">✓</span>`;
+   b.onclick=()=>choose(b,o);
+   box.appendChild(b);
+ });
+ $('#hint').textContent='';
+ stopSpeak();
+ if(autoRead) setTimeout(speakQuote,250);
+}
+
+function choose(btn,val){
+ if(locked) return; locked=true;
+ const correct = val===cur.a;
+ const buttons=[...document.querySelectorAll('.opt')];
+ buttons.forEach(b=>{
+   b.disabled=true;
+   const label=b.querySelector('span').textContent;
+   if(label===cur.a){b.classList.add('ok');}
+ });
+ if(correct){
+   streak++;
+   if(streak>best){best=streak;localStorage.setItem('oo_md_best',best);}
+   $('#streak').textContent=streak;$('#best').textContent=best;
+   $('#hint').textContent=T[lang].right+' 🎉';
+   track('answer_correct',{streak});
+   setTimeout(newQuestion,650);
+ }else{
+   btn.classList.remove('ok');btn.classList.add('no');
+   btn.querySelector('.mk').textContent='✕';
+   $('#hint').textContent=`${T[lang].wrong} ${cur.a}`;
+   track('answer_wrong',{streak});
+   streak=0;$('#streak').textContent=0;
+   setTimeout(newQuestion,1450);
+ }
+}
+
+/* ---------- TTS (읽어주기) ---------- */
+let speaking=false;
+function pickVoice(){
+ const want = lang==='ko'?'ko':'en';
+ const vs=speechSynthesis.getVoices();
+ return vs.find(v=>v.lang.toLowerCase().startsWith(want)) || null;
+}
+function speakQuote(){
+ if(!('speechSynthesis' in window)) return;
+ if(speaking){stopSpeak();return;}
+ const u=new SpeechSynthesisUtterance(cur.q);
+ u.lang = lang==='ko'?'ko-KR':'en-US';
+ const v=pickVoice(); if(v) u.voice=v;
+ u.rate=lang==='ko'?1.0:0.95;
+ u.onend=()=>{speaking=false;$('#speakBtn').classList.remove('active');};
+ u.onerror=()=>{speaking=false;$('#speakBtn').classList.remove('active');};
+ speechSynthesis.cancel();
+ speechSynthesis.speak(u);
+ speaking=true;$('#speakBtn').classList.add('active');
+}
+function stopSpeak(){if('speechSynthesis' in window)speechSynthesis.cancel();speaking=false;$('#speakBtn').classList.remove('active');}
+if('speechSynthesis' in window) speechSynthesis.onvoiceschanged=()=>{};
+
+function toggleAuto(){
+ autoRead=!autoRead;localStorage.setItem('oo_md_auto',autoRead?'1':'0');
+ $('#autoSw').classList.toggle('on',autoRead);
+ if(autoRead) speakQuote();
+}
+
+/* ---------- 공유 카드 (Canvas) ---------- */
+function shareCard(){
+ const c=document.createElement('canvas');c.width=1080;c.height=1080;
+ const x=c.getContext('2d');
+ x.fillStyle='#FAFAF8';x.fillRect(0,0,1080,1080);
+ x.fillStyle='#3D4248';
+ x.beginPath();x.arc(540,360,90,0,Math.PI*2);x.lineWidth=42;x.strokeStyle='#3D4248';x.stroke();
+ x.fillRect(519,450,42,130);
+ x.textAlign='center';
+ x.font='700 52px Pretendard, sans-serif';
+ x.fillText(lang==='ko'?'명대사 맞히기':'Guess the Line',540,700);
+ x.font='800 150px Pretendard, sans-serif';
+ x.fillText(best,540,860);
+ x.font='600 40px Pretendard, sans-serif';x.fillStyle='#5A616A';
+ x.fillText(lang==='ko'?'최고 연속 정답':'best streak',540,920);
+ x.font='600 34px Pretendard, sans-serif';
+ x.fillText('OnlyOne · For a Happy Day',540,1010);
+ c.toBlob(async b=>{
+   const file=new File([b],'onlyone-streak.png',{type:'image/png'});
+   if(navigator.canShare&&navigator.canShare({files:[file]})){
+     try{await navigator.share({files:[file],title:'OnlyOne'});return;}catch(e){}
+   }
+   const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='onlyone-streak.png';a.click();
+ });
+}
+
+/* ---------- 동의 / GA4 ---------- */
+function track(name,params){ if(window.__consent==='granted') gtag('event',name,params||{}); }
+function isEEA(){
+ try{
+   const tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'';
+   return tz.startsWith('Europe/')||tz.startsWith('Atlantic/');
+ }catch(e){return false;}
+}
+function setConsent(ok){
+ const v=ok?'granted':'denied';window.__consent=v;
+ localStorage.setItem('oo_consent',v);
+ gtag('consent','update',{
+   'analytics_storage':v,'ad_storage':'denied',
+   'ad_user_data':'denied','ad_personalization':'denied'
+ });
+ $('#consent').classList.remove('show');
+ document.body.classList.remove('banner-open');
+}
+function initConsent(){
+ const saved=localStorage.getItem('oo_consent');
+ if(saved){window.__consent=saved;
+   gtag('consent','update',{'analytics_storage':saved,'ad_storage':'denied','ad_user_data':'denied','ad_personalization':'denied'});
+   return;}
+ // 미선택: EEA는 기본 거부 유지, 배너 노출. 그 외도 동일하게 명시적 동의 요청.
+ setTimeout(()=>{$('#consent').classList.add('show');document.body.classList.add('banner-open');},800);
+}
+
+/* ---------- 시작 ---------- */
+$('#autoSw').classList.toggle('on',autoRead);
+applyLang();
+initConsent();
+</script>
+</body>
+</html>
